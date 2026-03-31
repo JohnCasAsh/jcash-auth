@@ -58,7 +58,7 @@ export function SignInCard() {
 
   // Phone sign-in state
   const [phoneStep, setPhoneStep] = useState<PhoneStep>('idle')
-  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('+63')
   const [otp, setOtp] = useState('')
 
   // MFA state
@@ -135,12 +135,15 @@ export function SignInCard() {
   }
 
   const handleSendOTP = async () => {
-    if (!phoneNumber.trim()) { setError('Please enter your phone number'); return }
+    const digits = phoneNumber.replace(/\D/g, '')
+    if (digits.length < 11) { setError('Enter a valid PH number e.g. +639XXXXXXXXX'); return }
+    const formatted = phoneNumber.startsWith('+') ? phoneNumber : `+63${phoneNumber.replace(/^0/, '')}`
     setError('')
     setIsLoading(true)
     try {
       const verifier = getRecaptcha()
-      confirmationRef.current = await startPhoneSignIn(phoneNumber, verifier)
+      await verifier.render()
+      confirmationRef.current = await startPhoneSignIn(formatted, verifier)
       setOtp('')
       setPhoneStep('enter-otp')
     } catch (err: unknown) {
@@ -183,6 +186,7 @@ export function SignInCard() {
     setPhoneStep('idle')
     setMfaState(null)
     setOtp('')
+    setPhoneNumber('+63')
     setError('')
     resetRecaptcha()
   }
@@ -274,8 +278,12 @@ export function SignInCard() {
                 <motion.div key="phone-input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                   <div className="relative">
                     <Phone className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors', focusedInput === 'phone' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
-                    <Input type="tel" placeholder="+63 XXX XXX XXXX" value={phoneNumber}
-                      onChange={e => setPhoneNumber(e.target.value)}
+                    <Input type="tel" placeholder="+63 9XX XXX XXXX" value={phoneNumber}
+                      onChange={e => {
+                        const v = e.target.value
+                        if (!v.startsWith('+63')) { setPhoneNumber('+63'); return }
+                        setPhoneNumber(v)
+                      }}
                       onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
                       className="pl-10" />
                   </div>
