@@ -122,7 +122,7 @@ export function SignUpCard() {
             <div className="text-center mb-5 space-y-2">
               <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.7 }}
                 className="mx-auto w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
-                <span className="text-orange-400 font-black text-lg" style={{ fontFamily: 'Orbitron, sans-serif' }}>J</span>
+                <img src="/JCashw.png" alt="JCASH" className="w-8 h-8 object-contain brightness-0 dark:brightness-100" />
               </motion.div>
               <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.04em' }}>
