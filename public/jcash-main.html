@@ -840,7 +840,7 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
     /* ── Fetch & decode GIF ── */
     var buf;
     try {
-      var res = await fetch('public/Crypto.gif');
+      var res = await fetch('/Crypto.gif');
       if (!res.ok) throw new Error(res.status);
       buf = new Uint8Array(await res.arrayBuffer());
     } catch (e) { return; }
