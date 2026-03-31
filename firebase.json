@@ -1,0 +1,29 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": [
+    {
+      "site": "jcash-wallet",
+      "public": "out",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true,
+      "rewrites": [
+        { "source": "/sign-in",        "destination": "/sign-in/index.html" },
+        { "source": "/sign-up",        "destination": "/sign-up/index.html" },
+        { "source": "/forgot-password","destination": "/forgot-password/index.html" }
+      ]
+    },
+    {
+      "site": "jcash-wallet-000",
+      "public": "out",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true,
+      "rewrites": [
+        { "source": "/sign-in",        "destination": "/sign-in/index.html" },
+        { "source": "/sign-up",        "destination": "/sign-up/index.html" },
+        { "source": "/forgot-password","destination": "/forgot-password/index.html" }
+      ]
+    }
+  ]
+}
