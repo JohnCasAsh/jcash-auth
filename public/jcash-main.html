@@ -791,9 +791,23 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
     html[data-theme="light"] .ct-input:focus { border-color:rgba(255,122,0,0.5); }
     .ct-input::placeholder { color:rgba(255,255,255,0.25); }
     html[data-theme="light"] .ct-input::placeholder { color:rgba(0,0,0,0.3); }
-    .ct-select { width:100%; padding:0.7rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:#181818; color:rgba(255,255,255,0.75); font-size:0.875rem; outline:none; box-sizing:border-box; transition:border-color 0.2s; font-family:inherit; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 0.875rem center; }
-    .ct-select:focus { border-color:rgba(255,122,0,0.6); box-shadow:0 0 0 3px rgba(255,122,0,0.1); }
-    html[data-theme="light"] .ct-select { background-color:#f9f9f9; border-color:rgba(0,0,0,0.1); color:#0a0a0a; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); }
+    .ct-dropdown { position:relative; width:100%; user-select:none; }
+    .ct-dropdown-btn { width:100%; padding:0.7rem 1rem; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); font-size:0.875rem; font-family:inherit; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box; }
+    .ct-dropdown-btn.has-value { color:#fff; }
+    .ct-dropdown-btn:hover,.ct-dropdown-btn.open { border-color:rgba(255,122,0,0.6); box-shadow:0 0 0 3px rgba(255,122,0,0.1); }
+    .ct-dropdown-btn svg { transition:transform 0.2s; flex-shrink:0; }
+    .ct-dropdown-btn.open svg { transform:rotate(180deg); }
+    .ct-dropdown-list { position:absolute; top:calc(100% + 6px); left:0; width:100%; background:#181818; border:1px solid rgba(255,122,0,0.3); border-radius:10px; overflow:hidden; z-index:999; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+    .ct-dropdown-item { padding:0.65rem 1rem; font-size:0.875rem; color:rgba(255,255,255,0.7); cursor:pointer; transition:background 0.15s,color 0.15s; }
+    .ct-dropdown-item:hover { background:rgba(255,122,0,0.12); color:#ff7a00; }
+    .ct-dropdown-item.selected { color:#ff7a00; background:rgba(255,122,0,0.08); }
+    html[data-theme="light"] .ct-dropdown-btn { background:#f9f9f9; border-color:rgba(0,0,0,0.1); color:rgba(0,0,0,0.35); }
+    html[data-theme="light"] .ct-dropdown-btn.has-value { color:#0a0a0a; }
+    html[data-theme="light"] .ct-dropdown-btn:hover,html[data-theme="light"] .ct-dropdown-btn.open { border-color:rgba(255,122,0,0.5); }
+    html[data-theme="light"] .ct-dropdown-list { background:#fff; border-color:rgba(255,122,0,0.25); box-shadow:0 8px 32px rgba(0,0,0,0.12); }
+    html[data-theme="light"] .ct-dropdown-item { color:rgba(0,0,0,0.65); }
+    html[data-theme="light"] .ct-dropdown-item:hover { background:rgba(255,122,0,0.08); color:#ff7a00; }
+    html[data-theme="light"] .ct-dropdown-item.selected { color:#ff7a00; background:rgba(255,122,0,0.06); }
     .ct-social { width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.45);transition:all 0.2s;text-decoration:none; }
     .ct-social:hover { border-color:rgba(255,122,0,0.5); color:#ff7a00; background:rgba(255,122,0,0.08); }
     html[data-theme="light"] .ct-social { border-color:rgba(0,0,0,0.1); background:rgba(0,0,0,0.03); color:rgba(0,0,0,0.4); }
@@ -861,14 +875,19 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
             </div>
             <div>
               <label class="ct-label">Subject</label>
-              <select class="ct-select ct-input" style="padding-right:2.5rem;">
-                <option value="">Choose a subject…</option>
-                <option>General Inquiry</option>
-                <option>Technical Support</option>
-                <option>Business Partnership</option>
-                <option>Bug Report</option>
-                <option>Other</option>
-              </select>
+              <div class="ct-dropdown" id="ct-subject-dd">
+                <div class="ct-dropdown-btn" id="ct-subject-btn" onclick="ctToggleDropdown()">
+                  <span id="ct-subject-label">Choose a subject…</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="ct-dropdown-list" id="ct-subject-list" style="display:none;">
+                  <div class="ct-dropdown-item" onclick="ctSelectItem(this,'General Inquiry')">General Inquiry</div>
+                  <div class="ct-dropdown-item" onclick="ctSelectItem(this,'Technical Support')">Technical Support</div>
+                  <div class="ct-dropdown-item" onclick="ctSelectItem(this,'Business Partnership')">Business Partnership</div>
+                  <div class="ct-dropdown-item" onclick="ctSelectItem(this,'Bug Report')">Bug Report</div>
+                  <div class="ct-dropdown-item" onclick="ctSelectItem(this,'Other')">Other</div>
+                </div>
+              </div>
             </div>
             <div>
               <label class="ct-label">Message</label>
@@ -1566,6 +1585,32 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
       });
     }, { passive: true });
   })();
+  </script>
+
+  <script>
+    function ctToggleDropdown() {
+      var btn  = document.getElementById('ct-subject-btn');
+      var list = document.getElementById('ct-subject-list');
+      var open = list.style.display !== 'none';
+      list.style.display = open ? 'none' : 'block';
+      btn.classList.toggle('open', !open);
+    }
+    function ctSelectItem(el, val) {
+      document.getElementById('ct-subject-label').textContent = val;
+      var btn = document.getElementById('ct-subject-btn');
+      btn.classList.add('has-value');
+      btn.classList.remove('open');
+      document.getElementById('ct-subject-list').style.display = 'none';
+      document.querySelectorAll('.ct-dropdown-item').forEach(function(i){ i.classList.remove('selected'); });
+      el.classList.add('selected');
+    }
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('ct-subject-dd');
+      if (dd && !dd.contains(e.target)) {
+        document.getElementById('ct-subject-list').style.display = 'none';
+        document.getElementById('ct-subject-btn').classList.remove('open');
+      }
+    });
   </script>
 
   <!-- Download bar — mobile only -->
