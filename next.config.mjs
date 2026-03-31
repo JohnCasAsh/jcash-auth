@@ -9,6 +9,13 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/', destination: '/jcash-main.html' },
+      ],
+    }
+  },
 };
 
 export default nextConfig;
