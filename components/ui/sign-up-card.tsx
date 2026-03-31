@@ -70,7 +70,7 @@ export function SignUpCard() {
     setIsLoading(true)
     try {
       await signUpEmail(name, email, password)
-      window.location.href = 'https://jcash-wallet.web.app'
+      router.push('/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
@@ -83,7 +83,7 @@ export function SignUpCard() {
     setOauthLoading(provider)
     try {
       await (provider === 'google' ? signInGoogle() : signInGithub())
-      window.location.href = 'https://jcash-wallet.web.app'
+      router.push('/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign in failed')
     } finally {
