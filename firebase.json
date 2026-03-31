@@ -5,18 +5,34 @@
   "hosting": [
     {
       "site": "jcash-wallet",
-      "public": "out",
+      "public": "public",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "redirects": [
-        { "source": "**", "destination": "https://jcash-shadcn-preview.vercel.app", "type": 301 }
+      "rewrites": [
+        { "source": "**", "destination": "/jcash-main.html" }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+          ]
+        }
       ]
     },
     {
       "site": "jcash-wallet-000",
-      "public": "out",
+      "public": "public",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "redirects": [
-        { "source": "**", "destination": "https://jcash-shadcn-preview.vercel.app", "type": 301 }
+      "rewrites": [
+        { "source": "**", "destination": "/jcash-main.html" }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+          ]
+        }
       ]
     }
   ]
