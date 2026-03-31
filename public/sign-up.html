@@ -156,14 +156,8 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
     import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
 
-    const app = initializeApp({
-      apiKey: 'AIzaSyCgMny6a0a7W7iDh6dz5jVFMACauxjT574',
-      authDomain: 'jcash-wallet.firebaseapp.com',
-      projectId: 'jcash-wallet',
-      storageBucket: 'jcash-wallet.firebasestorage.app',
-      messagingSenderId: '176572167180',
-      appId: '1:176572167180:web:d51723c72a15c7c33a6a29',
-    })
+    const config = await fetch('/__/firebase/init.json').then(r => r.json())
+    const app = initializeApp(config)
     const auth = getAuth(app)
     const googleProvider = new GoogleAuthProvider()
     const githubProvider = new GithubAuthProvider()
