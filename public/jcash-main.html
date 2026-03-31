@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="HandheldFriendly" content="true">
+  <meta name="MobileOptimized" content="width">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>JCASH — Secure. Fast. Limitless.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="JCashw.png" as="image" fetchpriority="high">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.js"></script>
+
+  <script>
+    (function () {
+      /* Apply saved or system theme before paint — prevents flash */
+      var saved = localStorage.getItem('jcash-theme');
+      if (saved === 'light' || (!saved && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+      /* Detect Flutter Android WebView (has "wv" in UA, Chrome browser does not) */
+      if (/Android/.test(navigator.userAgent) && /wv\)/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('is-webview');
+      }
+    })();
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: none; text-size-adjust: none; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body { min-height: 100svh; font-family: "Inter", sans-serif; color: #fff; background: #0a0a0a; overflow-x: hidden; }
+
+    #dot-grid-bg {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+    #btc-dither-bg {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100svh;
+      z-index: 1; pointer-events: none;
+      image-rendering: pixelated;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+    img, canvas, svg { display: block; max-width: 100%; }
+
+    main, .site-footer { position: relative; z-index: 2; }
+
+    /* ================================================
+       NAV — mobile first
+    ================================================ */
+    nav.site-nav {
+      position: fixed; top: 12px;
+      left: 50%; transform: translateX(-50%);
+      width: calc(100% - 32px);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; min-height: 50px;
+      background: rgba(14,14,14,0.90);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 9999px;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
+    }
+    nav.site-nav.nav-hidden {
+      transform: translateX(-50%) translateY(calc(-100% - 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+    .nav-logo {
+      display: block; width: auto;
+      height: clamp(34px, 8vw, 44px);
+      object-fit: contain;
+    }
+    .nav-links { display: none; list-style: none; }
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .nav-signin {
+      font-size: 0.8rem; font-weight: 700;
+      padding: 0.4rem 1rem; min-height: 34px;
+      border: 1.5px solid rgba(255,255,255,0.95);
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.92); color: #000;
+      display: flex; align-items: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transition: background 160ms ease, box-shadow 160ms ease;
+    }
+    .nav-signin:hover { background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+
+    /* ================================================
+       HERO — mobile first
+    ================================================ */
+    .hero {
+      position: relative; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding: 24px 24px 56px;
+      margin-top: 90px;
+      text-align: center;
+    }
+    .hero-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #ff7a00; margin-bottom: 10px; }
+    .hero-lockup { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 8px; }
+    .hero-logo { height: clamp(44px, 11vw, 60px); width: auto; flex-shrink: 0; transform: scale(1.4); transform-origin: center center; }
+    .hero-brand { font-family: "Orbitron", sans-serif; font-size: clamp(2rem, 10vw, 3.25rem); font-weight: 900; letter-spacing: 0.04em; line-height: 1; color: #fff; }
+    .hero-tagline { font-size: 1.0625rem; font-weight: 400; color: rgba(255,255,255,0.45); letter-spacing: 0.06em; line-height: 1.5; margin-bottom: 28px; }
+    .hero-ctas { display: flex; flex-direction: column; gap: 13px; width: 100%; }
+    .hero-scroll { display: none; }
+
+    /* ================================================
+       BUTTONS — mobile first (full-width stacked)
+    ================================================ */
+    .btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 60px;
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      border-radius: 18px; border: none;
+      transition: opacity 140ms ease, transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, backdrop-filter 140ms ease;
+    }
+    .btn:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-primary { background: #fff; color: #000; font-weight: 800; }
+    .btn-primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.12); color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(12px) saturate(135%);
+      -webkit-backdrop-filter: blur(12px) saturate(135%);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5);
+      backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .btn-secondary:active { background: rgba(255,255,255,0.13); transform: scale(0.98); }
+
+    /* ================================================
+       FEATURES — mobile first
+    ================================================ */
+    .features {
+      padding: 48px 0 36px;
+      background: #0c0c0c;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .features-heading {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.5rem, 4.5vw, 2.6rem); font-weight: 900;
+      line-height: 1.15; color: #fff; text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: center; padding: 0 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .features-heading em { font-style: normal; color: #ff7a00; }
+    .ticker-live-dot {
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: #10b981; flex-shrink: 0;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.5);
+      animation: live-pulse 2s ease-in-out infinite;
+    }
+    @keyframes live-pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.5); }
+      60%  { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0   rgba(16,185,129,0); }
+    }
+    .features-sublabel {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-bottom: 2.5rem; letter-spacing: 0.02em;
+    }
+
+
+
+    /* ── THEME TOGGLE ── */
+    .theme-toggle {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.75);
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.20); color: #fff; }
+    .theme-toggle svg { display: block; pointer-events: none; }
+
+    /* ── CRYPTO TICKER ── */
+    .ticker-outer {
+      overflow: hidden; width: 100%; position: relative;
+      padding: 20px 0;
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+    }
+    .ticker-track {
+      display: flex; gap: 16px; width: max-content;
+      animation: ticker-scroll 32s linear infinite;
+    }
+    @media (hover: hover) {
+      .ticker-outer:hover .ticker-track { animation-play-state: paused; }
+    }
+    @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .ticker-card {
+      flex-shrink: 0; width: 260px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 1.25rem; padding: 1.1rem 1.2rem 1rem;
+      cursor: default;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    @media (hover: hover) {
+      .ticker-card:hover { box-shadow: 0 8px 32px rgba(255,255,255,0.06); transform: scale(1.03); }
+    }
+    .ticker-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .ticker-coin-info { display: flex; align-items: center; gap: 10px; }
+    .ticker-coin-logo { width: 34px; height: 34px; border-radius: 50%; }
+    .ticker-coin-name { font-size: 0.875rem; font-weight: 700; color: #fff; line-height: 1.2; }
+    .ticker-coin-sym  { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+    .ticker-badge { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; line-height: 1.5; white-space: nowrap; }
+    .ticker-badge.up { background: rgba(16,185,129,0.15); color: #10b981; }
+    .ticker-badge.dn { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .ticker-price { font-size: 1.05rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+    .ticker-spark-wrap { height: 46px; width: 100%; margin-bottom: 8px; }
+    .ticker-spark { width: 100%; height: 46px; overflow: visible; display: block; }
+    .ticker-vol { font-size: 0.68rem; color: rgba(255,255,255,0.3); }
+
+    /* ================================================
+       FEATURE CARDS
+    ================================================ */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      max-width: 1000px;
+      margin: 3rem auto 0;
+      padding: 0 1.5rem;
+    }
+    @media (min-width: 640px) {
+      .feature-cards { grid-template-columns: repeat(3, 1fr); margin-top: 3.5rem; }
+    }
+    .feature-card {
+      display: flex; flex-direction: column; gap: 1rem;
+      padding: 2rem 1.75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 1.25rem;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+    }
+    .feature-card:hover {
+      border-color: rgba(255,122,0,0.35);
+      box-shadow: 0 0 32px rgba(255,122,0,0.08);
+      transform: translateY(-3px);
+    }
+    .feature-card-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(255,122,0,0.12);
+      border: 1px solid rgba(255,122,0,0.22);
+      display: flex; align-items: center; justify-content: center;
+      color: #ff7a00; flex-shrink: 0;
+    }
+    .feature-card-icon svg { width: 22px; height: 22px; display: block; }
+    .feature-card-title {
+      font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.2;
+    }
+    .feature-card-desc {
+      font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.6; margin: 0;
+    }
+    html[data-theme="light"] .feature-card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.09); }
+    html[data-theme="light"] .feature-card:hover { border-color: rgba(255,122,0,0.4); }
+    html[data-theme="light"] .feature-card-title { color: #0a0a0a; }
+    html[data-theme="light"] .feature-card-desc { color: rgba(0,0,0,0.45); }
+
+    /* ================================================
+       SOCIAL PROOF
+    ================================================ */
+    .social-proof {
+      padding: 4rem 1.5rem 4rem;
+      background: #0c0c0c;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .about-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.22em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+      margin-bottom: 0.75rem;
+    }
+    html[data-theme="light"] .about-label { color: rgba(0,0,0,0.35); }
+    .social-proof-inner {
+      max-width: 900px; margin: 0 auto;
+      text-align: center;
+    }
+    .social-proof-eyebrow {
+      font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #ff7a00; margin: 0 0 2rem;
+      min-height: 1.3em; line-height: 1.2;
+      font-family: "Orbitron", sans-serif;
+    }
+    .typed-cursor {
+      display: inline-block; margin-left: 2px;
+      color: #ff7a00; font-weight: 300;
+      animation: cursor-blink 0.55s ease-in-out infinite alternate;
+    }
+    @keyframes cursor-blink { from { opacity: 1; } to { opacity: 0; } }
+    /* ── App Showcase ── */
+    .app-showcase {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 2.5rem;
+      margin-top: 2rem;
+    }
+    .app-mockup-wrap { display: flex; justify-content: center; }
+    .app-mockup-img {
+      width: min(220px, 64vw);
+      filter: drop-shadow(0 20px 52px rgba(255,122,0,0.28));
+    }
+    .app-showcase-col {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center; gap: 1.5rem;
+    }
+    .app-showcase-desc {
+      font-size: 0.95rem; color: rgba(255,255,255,0.45);
+      max-width: 360px; line-height: 1.7;
+    }
+    .app-stats-row {
+      display: flex; gap: 2rem; justify-content: center;
+    }
+    .app-stat-item {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    }
+    .app-stat-num {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.15rem, 3vw, 1.6rem);
+      font-weight: 900; color: #ff7a00; line-height: 1;
+    }
+    .app-stat-lbl {
+      font-size: 0.65rem; font-weight: 600;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .app-dl-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 0.75rem 1.75rem; border-radius: 9999px;
+      background: #ff7a00; color: #000;
+      font-size: 0.85rem; font-weight: 800; letter-spacing: 0.05em;
+      text-decoration: none; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(255,122,0,0.38);
+      transition: box-shadow 160ms ease, transform 160ms ease;
+    }
+    .app-dl-btn:hover { box-shadow: 0 6px 32px rgba(255,122,0,0.55); transform: translateY(-1px); }
+    .app-dl-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── Slide panel ── */
+    .slide-container { position: relative; width: 100%; }
+    .app-slide {
+      display: flex; flex-direction: column; gap: 1.5rem;
+      align-items: center;
+      transition: opacity 0.45s ease;
+    }
+    .app-slide.s-inactive {
+      position: absolute; top: 0; left: 0; right: 0;
+      opacity: 0; pointer-events: none;
+    }
+    .app-slide.s-active { opacity: 1; position: relative; pointer-events: auto; }
+
+    /* Right panel slide states — fixed height so layout never shifts */
+    .app-mockup-wrap { position: relative; display: flex; justify-content: center; align-items: center; }
+    .app-right {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; justify-content: center; align-items: center;
+      transition: opacity 0.45s ease;
+    }
+    .app-right.s-inactive { opacity: 0; pointer-events: none; }
+    .app-right.s-active   { opacity: 1; pointer-events: auto; }
+    /* Slide 2 label */
+    .app-slide-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #ff7a00;
+    }
+    .app-slide-note {
+      font-size: 0.72rem; color: rgba(255,255,255,0.3); letter-spacing: 0.06em;
+    }
+    html[data-theme="light"] .app-slide-note { color: rgba(0,0,0,0.3); }
+
+    /* Payment float bubbles */
+    .payment-float { position: relative; width: min(340px, 88vw); height: 320px; }
+    .pay-badge {
+      position: absolute;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 22px; overflow: hidden;
+    }
+    .pay-badge.lg { width: 112px; height: 112px; border-radius: 26px; }
+    .pay-badge.md { width: 90px;  height: 90px;  border-radius: 22px; }
+    .pay-badge.sm { width: 68px;  height: 68px;  border-radius: 18px; }
+    .pay-icon { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* Slide dot nav */
+    .slide-nav { display: flex; align-items: center; gap: 8px; margin-top: 1.25rem; }
+    .slide-dot-btn {
+      width: 8px; height: 8px; border-radius: 9999px;
+      padding: 0; border: none; cursor: pointer;
+      background: rgba(255,255,255,0.22);
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+    .slide-dot-btn.s-active { width: 24px; border-radius: 4px; background: #ff7a00; }
+
+    /* Light mode overrides */
+    html[data-theme="light"] .slide-dot-btn { background: rgba(0,0,0,0.16); }
+    html[data-theme="light"] .slide-dot-btn.s-active { background: #ff7a00; }
+    html[data-theme="light"] .app-showcase-desc { color: rgba(0,0,0,0.48); }
+
+    /* ================================================
+       FOOTER — updated
+    ================================================ */
+    .site-footer {
+      background: #0c0c0c;
+      padding: 2rem 1.5rem max(28px, env(safe-area-inset-bottom, 28px));
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .footer-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 1.25rem;
+      text-align: center;
+    }
+    .footer-copy { font-size: 0.875rem; color: rgba(255,255,255,0.35); }
+    .footer-policy {
+      font-size: 0.8rem; color: rgba(255,255,255,0.35);
+      text-decoration: underline; text-underline-offset: 3px;
+      transition: color 160ms ease;
+    }
+    .footer-policy:hover { color: rgba(255,255,255,0.7); }
+    .footer-socials { display: flex; align-items: center; gap: 10px; }
+    .footer-social-link {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.11);
+      color: rgba(255,255,255,0.50);
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+    .footer-social-link:hover { background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.26); }
+    .footer-social-link svg { width: 15px; height: 15px; display: block; }
+
+    /* ================================================
+       LIGHT MODE — base (all screens)
+    ================================================ */
+    html[data-theme="light"] body { background: #f0f0f0; color: #0a0a0a; }
+    html[data-theme="light"] nav.site-nav { background: rgba(245,245,245,0.92); border-color: rgba(0,0,0,0.10); }
+    html[data-theme="light"] .nav-links a { color: rgba(0,0,0,0.50); }
+    html[data-theme="light"] .nav-links a:hover { color: #000; }
+    html[data-theme="light"] .nav-logo,
+    html[data-theme="light"] .hero-logo { filter: brightness(0); }
+    html[data-theme="light"] .theme-toggle { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.15); color: rgba(0,0,0,0.60); }
+    html[data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.13); color: #000; }
+    html[data-theme="light"] .nav-signin { background: rgba(0,0,0,0.88); border-color: rgba(0,0,0,0.88); color: #fff; }
+    html[data-theme="light"] .nav-signin:hover { background: #000; }
+    html[data-theme="light"] .hero-brand { color: #0a0a0a; }
+    html[data-theme="light"] .hero-tagline { color: rgba(0,0,0,0.45); }
+    html[data-theme="light"] .hero-scroll { color: rgba(0,0,0,0.25); }
+    html[data-theme="light"] .btn-primary { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
+    html[data-theme="light"] .btn-secondary { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.18); color: #0a0a0a; box-shadow: 0 4px 14px rgba(0,0,0,0.10); }
+    html[data-theme="light"] .btn-secondary:hover { background: rgba(0,0,0,0.13); border-color: rgba(0,0,0,0.32); }
+    html[data-theme="light"] .features-heading { color: #0a0a0a; }
+    html[data-theme="light"] .features-sublabel { color: rgba(0,0,0,0.40); }
+    html[data-theme="light"] .features { background: #e6e6e6; border-top-color: rgba(0,0,0,0.08); }
+    html[data-theme="light"] .site-footer { background: #e6e6e6; color: rgba(0,0,0,0.32); border-top-color: rgba(0,0,0,0.08); }
+html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.09); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    html[data-theme="light"] .features-heading { color: #0a0a0a; }
+    html[data-theme="light"] .ticker-coin-name { color: #0a0a0a; }
+    html[data-theme="light"] .ticker-coin-sym  { color: rgba(0,0,0,0.4); }
+    html[data-theme="light"] .ticker-price     { color: #0a0a0a; }
+    html[data-theme="light"] .ticker-vol       { color: rgba(0,0,0,0.3); }
+    html[data-theme="light"] .social-proof { background: #e6e6e6; }
+    html[data-theme="light"] .app-showcase-desc { color: rgba(0,0,0,0.48); }
+    html[data-theme="light"] .app-stat-lbl { color: rgba(0,0,0,0.38); }
+    html[data-theme="light"] .site-footer { background: #e8e8e8; border-top-color: rgba(0,0,0,0.09); }
+    html[data-theme="light"] .footer-copy { color: rgba(0,0,0,0.45); }
+    html[data-theme="light"] .footer-policy { color: rgba(0,0,0,0.45); }
+    html[data-theme="light"] .footer-social-link { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.50); }
+    html[data-theme="light"] .footer-social-link:hover { background: rgba(0,0,0,0.12); color: #000; }
+
+    /* ================================================
+       TABLET + DESKTOP  (≥640px) — desktop-style layout
+    ================================================ */
+    @media (min-width: 640px) {
+      /* Nav */
+      nav.site-nav { top: 12px; padding: 0 1rem; min-height: 58px; }
+      .nav-logo { height: clamp(42px, 6vw, 56px); }
+      .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+      .nav-links a { font-size: 0.875rem; color: rgba(255,255,255,0.55); transition: color 180ms ease; }
+      .nav-links a:hover { color: #fff; }
+      .nav-actions { gap: 10px; }
+      .nav-signin { font-size: 0.875rem; padding: 0.55rem 1.4rem; min-height: 42px; }
+
+      /* Hero — switch to left-aligned desktop style */
+      .hero { align-items: flex-start; justify-content: center; padding: 80px 1.25rem 3rem clamp(3%, 4vw, 48px); }
+      .hero-content {
+        flex: none;
+        align-items: flex-start; justify-content: flex-start;
+        padding: 0; margin-top: 0; text-align: left;
+        gap: 1.1rem; max-width: 310px;
+      }
+      .hero-eyebrow { font-size: 0.72rem; letter-spacing: 0.22em; margin-bottom: 0; }
+      .hero-lockup { justify-content: flex-start; margin-bottom: 0; gap: 2rem; }
+      .hero-logo { height: clamp(60px, 8vw, 90px); transform: scale(1.8); }
+      .hero-logo { height: clamp(70px, 8.5vw, 105px); }
+      .hero-brand { font-size: clamp(2.25rem, 5.5vw, 3.5rem); }
+      .hero-tagline { font-size: 0.9rem; color: rgba(255,255,255,0.48); letter-spacing: 0.14em; font-weight: 300; margin-bottom: 0; }
+      .hero-ctas { flex-direction: row; flex-wrap: wrap; width: auto; gap: 0.75rem; justify-content: flex-start; }
+      .hero-scroll {
+        display: block; position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+        z-index: 2; color: rgba(255,255,255,0.3);
+        animation: hero-bounce 2s ease-in-out infinite;
+      }
+      .hero-scroll svg { width: 22px; height: 22px; }
+
+      /* Buttons — inline desktop style */
+      .btn {
+        display: inline-flex; width: auto;
+        min-height: 46px; padding: 0.7rem 1.6rem;
+        border-radius: 9999px;
+        font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em;
+      }
+      .btn:active { opacity: 1; transform: scale(0.97); }
+      .btn-primary { border: 1.5px solid #fff; font-weight: 600; box-shadow: 0 6px 18px rgba(255,255,255,0.12); }
+      .btn-primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+      .btn-secondary {
+        background: rgba(255,255,255,0.10); border: 1.5px solid rgba(255,255,255,0.45);
+        backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.14);
+      }
+      .btn-secondary:hover {
+        background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.55);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
+
+      /* Features */
+      .features { padding: 5rem 0 3rem; background: #0e0e0e; border-top: 1px solid rgba(255,255,255,0.07); }
+
+      /* Footer */
+      .site-footer { background: transparent; padding: 2rem 1rem; color: rgba(255,255,255,0.4); border-top-color: rgba(255,255,255,0.07); }
+
+      /* Light mode overrides for tablet+ */
+      html[data-theme="light"] .features { background: #f2f2f3; }
+      html[data-theme="light"] .features-heading { color: #1a1208; }
+      html[data-theme="light"] .site-footer { background: transparent; color: rgba(0,0,0,0.38); border-top-color: rgba(0,0,0,0.08); }
+      html[data-theme="light"] .btn-primary { box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+      html[data-theme="light"] .btn-primary:hover { background: #222; }
+      html[data-theme="light"] .btn-secondary { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.28); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+      html[data-theme="light"] .btn-secondary:hover { background: rgba(0,0,0,0.12); border-color: rgba(0,0,0,0.42); box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
+
+      /* App showcase — side by side on tablet+ */
+      .app-showcase { flex-direction: row-reverse; align-items: center; gap: 3rem; }
+      .app-showcase-col { align-items: flex-start; text-align: left; flex: 1; }
+      .app-slide { align-items: flex-start; }
+      .app-stats-row { justify-content: flex-start; gap: 2.5rem; }
+      .slide-nav { justify-content: flex-start; }
+      .app-mockup-img { width: min(200px, 28vw); }
+      .app-mockup-wrap { min-height: 420px; flex-shrink: 0; width: min(280px, 36vw); }
+      .payment-float { width: min(280px, 36vw); height: 320px; }
+      .social-proof { background: #0e0e0e; border-top-color: rgba(255,255,255,0.07); }
+      html[data-theme="light"] .social-proof { background: #f2f2f3; border-top-color: rgba(0,0,0,0.08); }
+      /* Footer — row layout on tablet+ */
+      .footer-inner { flex-direction: row; justify-content: space-between; text-align: left; }
+      /* Footer light mode tablet+ */
+      html[data-theme="light"] .site-footer { background: transparent; border-top-color: rgba(0,0,0,0.09); }
+    }
+
+    /* ── Download banner (mobile only) ── */
+    .download-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 12px 16px max(16px, env(safe-area-inset-bottom, 16px));
+      background: rgba(10,10,10,0.96);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .download-bar-text { flex: 1; }
+    .download-bar-title { font-size: 0.8rem; font-weight: 700; color: #fff; line-height: 1.2; }
+    .download-bar-sub { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    .download-bar-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 0.55rem 1.1rem; border-radius: 9999px;
+      background: #ff7a00; color: #000;
+      font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em;
+      white-space: nowrap; text-decoration: none;
+      box-shadow: 0 4px 14px rgba(255,122,0,0.35);
+      flex-shrink: 0;
+    }
+    .download-bar-btn svg { width: 14px; height: 14px; }
+    .download-bar-close {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
+      font-size: 1rem; line-height: 1; cursor: pointer; border: none;
+    }
+    /* Flutter WebView only — lower nav to clear Android status bar */
+    @media (max-width: 639px) {
+      html.is-webview nav.site-nav { top: max(44px, env(safe-area-inset-top, 44px)); }
+    }
+    /* hide on desktop */
+    @media (min-width: 640px) { .download-bar { display: none; } }
+    @media (max-width: 639px) { body { padding-bottom: 78px; } }
+    html[data-theme="light"] .download-bar { background: rgba(240,240,240,0.97); border-top-color: rgba(0,0,0,0.1); }
+    html[data-theme="light"] .download-bar-title { color: #0a0a0a; }
+    html[data-theme="light"] .download-bar-close { background: rgba(0,0,0,0.07); color: rgba(0,0,0,0.4); }
+
+    @keyframes hero-bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(7px); }
+    }
+
+    /* ================================================
+       DESKTOP  (≥1024px) — full layout
+    ================================================ */
+    @media (min-width: 1024px) {
+      nav.site-nav {
+        top: 14px;
+        width: calc(100% - 48px); max-width: 1080px;
+        min-height: 62px; padding: 0 1.5rem;
+        background: rgba(14,14,14,0.88);
+      }
+      .nav-logo { height: clamp(52px, 5vw, 68px); }
+      .hero { padding: 90px 1.5rem 4rem clamp(5%,7vw,100px); }
+      .hero-content { max-width: 520px; gap: 1.5rem; }
+      .hero-logo { height: clamp(85px, 10vw, 130px); }
+      .hero-brand { font-size: clamp(2.5rem, 5.5vw, 4.5rem); }
+      .hero-tagline { font-size: clamp(0.95rem, 1.25vw, 1.1rem); }
+      .btn { min-height: 52px; padding: 0.8rem 2.25rem; font-size: 0.875rem; }
+      .features { padding: 6rem 0 5rem; }
+      .app-showcase { gap: 5rem; }
+      .app-mockup-img { width: min(240px, 22vw); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="dot-grid-bg" aria-hidden="true"></canvas>
+  <canvas id="btc-dither-bg" aria-hidden="true"></canvas>
+
+  <nav class="site-nav" aria-label="Main navigation">
+    <img class="nav-logo" src="JCashw.png" alt="JCASH" decoding="async" fetchpriority="high" />
+    <ul class="nav-links" role="list">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
+      <a href="/sign-in" class="nav-signin">Sign In</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero" aria-label="Hero">
+      <div class="hero-content">
+        <p class="hero-eyebrow">The Future of Payments</p>
+        <div class="hero-lockup">
+          <img class="hero-logo" src="JCashw.png" alt="" decoding="async" aria-hidden="true" />
+          <span class="hero-brand">JCASH</span>
+        </div>
+        <p class="hero-tagline">Secure. Fast. Limitless.</p>
+        <div class="hero-ctas">
+          <a href="#" class="btn btn-primary">Get Started</a>
+          <a href="#" class="btn btn-secondary">Learn More</a>
+        </div>
+      </div>
+      <div class="hero-scroll" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </section>
+
+    <section class="features" id="features" aria-label="Features">
+      <h2 class="features-heading">Why <em>JCASH</em>?</h2>
+      <div class="features-sublabel">
+        <span class="ticker-live-dot"></span>
+        Live market prices &nbsp;·&nbsp; updates every 30s
+      </div>
+      <div class="ticker-outer" id="ticker-outer">
+        <div class="ticker-track" id="ticker-track"></div>
+      </div>
+
+      <div class="social-proof-inner" id="about" style="padding: 3.5rem 1.5rem 0;">
+        <p class="social-proof-eyebrow"><span id="typed-trusted"></span><span class="typed-cursor">_</span></p>
+        <div class="app-showcase">
+
+          <!-- RIGHT: switches between phone and payment icons -->
+          <div class="app-mockup-wrap">
+            <!-- Slide 0 right: phone -->
+            <div class="app-right s-active" data-right="0">
+              <img class="app-mockup-img" src="jcash-portrait.png" alt="JCASH App" />
+            </div>
+            <!-- Slide 1 right: payment icons -->
+            <div class="app-right s-inactive" data-right="1">
+              <div class="payment-float">
+                <!-- GCash — top-left, large -->
+                <div class="pay-badge lg" style="top:0;left:0;transform:rotate(-8deg);box-shadow:0 8px 22px rgba(0,120,255,0.28),0 2px 8px rgba(0,0,0,0.3)">
+                  <img src="app/image1.jpeg" class="pay-icon" alt="GCash" />
+                </div>
+                <!-- Maya — top-right, medium -->
+                <div class="pay-badge md" style="top:0;right:0;transform:rotate(6deg);box-shadow:0 8px 22px rgba(0,192,100,0.28),0 2px 8px rgba(0,0,0,0.3)">
+                  <img src="app/image5.jpeg" class="pay-icon" alt="Maya" />
+                </div>
+                <!-- PayPal — mid-left, medium -->
+                <div class="pay-badge md" style="top:148px;left:10px;transform:rotate(4deg);box-shadow:0 8px 22px rgba(0,112,186,0.28),0 2px 8px rgba(0,0,0,0.25)">
+                  <img src="app/image3.jpeg" class="pay-icon" alt="PayPal" />
+                </div>
+                <!-- GoTyme — mid-right, medium -->
+                <div class="pay-badge md" style="top:132px;right:0;transform:rotate(-5deg);box-shadow:0 8px 22px rgba(0,210,210,0.28),0 2px 8px rgba(0,0,0,0.3)">
+                  <img src="app/image2.jpeg" class="pay-icon" alt="GoTyme" />
+                </div>
+                <!-- MariBank — bottom-center, small -->
+                <div class="pay-badge sm" style="bottom:0;left:50%;transform:translateX(-50%) rotate(-4deg);box-shadow:0 8px 22px rgba(255,107,53,0.28),0 2px 8px rgba(0,0,0,0.3)">
+                  <img src="app/image4.jpeg" class="pay-icon" alt="MariBank" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LEFT: text slides -->
+          <div class="app-showcase-col">
+            <div class="slide-container">
+
+              <div class="app-slide s-active" data-slide="0">
+                <p class="app-showcase-desc">Download JCASH for Android and manage your crypto on the go. Secure, fast, and built for real payments.</p>
+                <div class="app-stats-row">
+                  <div class="app-stat-item"><span class="app-stat-num">10,000+</span><span class="app-stat-lbl">Users</span></div>
+                  <div class="app-stat-item"><span class="app-stat-num">99.9%</span><span class="app-stat-lbl">Uptime</span></div>
+                  <div class="app-stat-item"><span class="app-stat-num">$2M+</span><span class="app-stat-lbl">Processed</span></div>
+                </div>
+                <a href="https://jcashtrial34921.z13.web.core.windows.net/JCASH.apk" class="app-dl-btn" download>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download for Android
+                </a>
+              </div>
+
+              <div class="app-slide s-inactive" data-slide="1">
+                <p class="app-slide-label">Supported Platforms</p>
+                <p class="app-showcase-desc">Send and receive money through the apps you already trust — local and global platforms, all in one place.</p>
+                <p class="app-slide-note">GCash &nbsp;·&nbsp; Maya &nbsp;·&nbsp; PayPal &nbsp;·&nbsp; GoTyme &nbsp;·&nbsp; MariBank &nbsp;·&nbsp; more coming</p>
+              </div>
+
+            </div>
+
+            <div class="slide-nav" role="tablist" aria-label="Section slides">
+              <button class="slide-dot-btn s-active" data-target="0"></button>
+              <button class="slide-dot-btn"           data-target="1"></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contact">
+    <div class="footer-inner">
+      <p class="footer-copy">&copy; 2026 JCASH. All rights reserved.</p>
+      <a href="#" class="footer-policy">Privacy Policy</a>
+      <div class="footer-socials">
+        <!-- Twitter / X -->
+        <a href="#" class="footer-social-link" aria-label="Twitter / X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <!-- GitHub -->
+        <a href="#" class="footer-social-link" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        </a>
+        <!-- LinkedIn -->
+        <a href="#" class="footer-social-link" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (async function () {
+    var canvas = document.getElementById('btc-dither-bg');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    /* ── Off-screen canvas for pre-rendered dithered frames ── */
+    var OUT = 500;
+    var ditherCanvas = document.createElement('canvas');
+    ditherCanvas.width = ditherCanvas.height = OUT;
+    var ditherCtx = ditherCanvas.getContext('2d');
+
+    /* ── Bayer 4×4 matrix ── */
+    var BAYER4 = [
+      [ 0,  8,  2, 10],
+      [12,  4, 14,  6],
+      [ 3, 11,  1,  9],
+      [15,  7, 13,  5],
+    ];
+    var GRID = 2, THRESHOLD = 0.22;
+    var COL_DARK = [10, 10, 10], COL_ORANGE = [255, 122, 0]; /* COL_DARK matches body #0a0a0a */
+
+    /* ── Coin layout helper ── */
+    function coinLayout() {
+      var W = window.innerWidth, H = window.innerHeight;
+      var navH = W < 640 ? 106 : 90, availH = H - navH;
+      var isPhone = W < 640, isTablet = W >= 640 && W < 1024;
+      var size = isPhone
+        ? Math.min(W * 0.62, availH * 0.42, 245)
+        : isTablet
+          ? Math.min(W * 0.40, availH * 0.58, 360)
+          : Math.min(W * 0.40, availH * 0.72, 520);
+      var coinCX = isPhone ? W / 2 : (isTablet ? W * 0.68 : W * 0.70);
+      var dx = Math.floor(coinCX - size / 2);
+      var dy = isPhone
+        ? navH + Math.floor(availH * 0.06)
+        : navH + Math.floor((availH - size) / 2);
+      return { W: W, H: H, dx: dx, dy: dy, size: size };
+    }
+
+    /* ── Resize handler — runs before fetch so canvas is ready immediately ── */
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width  = Math.floor(window.innerWidth  * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width  = '100vw';
+      canvas.style.height = '100svh';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    /* ── Fetch & decode GIF ── */
+    var buf;
+    try {
+      var res = await fetch('public/Crypto.gif');
+      if (!res.ok) throw new Error(res.status);
+      buf = new Uint8Array(await res.arrayBuffer());
+    } catch (e) { return; }
+
+    var gr;
+    try { gr = new GifReader(buf); } catch (e) { return; }
+
+    var GW = gr.width, GH = gr.height, N = gr.numFrames();
+    var scaleX = GW / OUT, scaleY = GH / OUT;
+
+    /* ── Dither one RGBA composite → ImageData (500×500) ── */
+    function ditherFrame(rgba) {
+      var out = ditherCtx.createImageData(OUT, OUT);
+      var d = out.data;
+      for (var y = 0; y < OUT; y += GRID) {
+        var sy = Math.min(GH-1, Math.floor(y * scaleY));
+        for (var x = 0; x < OUT; x += GRID) {
+          var sx = Math.min(GW-1, Math.floor(x * scaleX));
+          var si = (sy * GW + sx) * 4;
+          if (rgba[si+3] < 10) continue;
+          var lum = (0.299*rgba[si] + 0.587*rgba[si+1] + 0.114*rgba[si+2]) / 255;
+          var mx = Math.floor(x / GRID) % 4;
+          var my = Math.floor(y / GRID) % 4;
+          var thr = BAYER4[my][mx] / 16;
+          thr = thr * (1 - THRESHOLD) + THRESHOLD * 0.5;
+          var c = lum < thr ? COL_DARK : COL_ORANGE;
+          for (var by = 0; by < GRID && (y+by) < OUT; by++) {
+            for (var bx = 0; bx < GRID && (x+bx) < OUT; bx++) {
+              var oi = ((y+by)*OUT + (x+bx)) * 4;
+              d[oi]=c[0]; d[oi+1]=c[1]; d[oi+2]=c[2]; d[oi+3]=255;
+            }
+          }
+        }
+      }
+      return out;
+    }
+
+    /* ── Animation loop — uses frames as they arrive ── */
+    var frames = [];
+    var fi = 0, frameStart = null;
+    function animate(ts) {
+      requestAnimationFrame(animate);
+      if (frames.length === 0) return;
+      if (frameStart === null) frameStart = ts;
+      if (ts - frameStart >= frames[fi].delay) {
+        fi = (fi + 1) % frames.length;
+        frameStart = ts;
+      }
+      var L = coinLayout();
+      ctx.clearRect(0, 0, L.W, L.H);
+      var cx = L.dx + L.size / 2, cy = L.dy + L.size / 2;
+      var glow = ctx.createRadialGradient(cx, cy, 10, cx, cy, L.size * 0.7);
+      glow.addColorStop(0, 'rgba(255,122,0,0.05)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, L.W, L.H);
+      ditherCtx.putImageData(frames[fi].imageData, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(ditherCanvas, L.dx, L.dy, L.size, L.size);
+      window._coinBounds = { dx: L.dx, dy: L.dy, size: L.size };
+    }
+    requestAnimationFrame(animate);
+
+    /* ── Decode frames progressively in background ── */
+    var composite = new Uint8ClampedArray(GW * GH * 4);
+    var prevComp  = new Uint8ClampedArray(GW * GH * 4);
+    for (var i = 0; i < N; i++) {
+      var info  = gr.frameInfo(i);
+      var patch = new Uint8ClampedArray(GW * GH * 4);
+      gr.decodeAndBlitFrameRGBA(i, patch);
+      prevComp.set(composite);
+      for (var p = 0; p < patch.length; p += 4) {
+        if (patch[p+3] > 0) {
+          composite[p]=patch[p]; composite[p+1]=patch[p+1];
+          composite[p+2]=patch[p+2]; composite[p+3]=patch[p+3];
+        }
+      }
+      frames.push({
+        imageData: ditherFrame(new Uint8ClampedArray(composite)),
+        delay: Math.max(50, (info.delay || 8) * 20),
+      });
+      var disp = info.disposal;
+      if (disp === 2) {
+        var fx=info.x||0, fy=info.y||0, fw=info.width||GW, fh=info.height||GH;
+        for (var row=fy; row<fy+fh; row++) {
+          for (var col=fx; col<fx+fw; col++) {
+            var ci=(row*GW+col)*4;
+            composite[ci]=0; composite[ci+1]=0; composite[ci+2]=0; composite[ci+3]=0;
+          }
+        }
+      } else if (disp === 3) { composite.set(prevComp); }
+      await new Promise(function(r){ setTimeout(r, 0); });
+    }
+  })();
+
+  /* ── ClickSpark ── */
+  (function () {
+    var sc = document.createElement('canvas');
+    sc.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100svh;z-index:10;pointer-events:none;';
+    document.body.appendChild(sc);
+    var sctx = sc.getContext('2d');
+
+    function resizeSpark() {
+      var dpr = window.devicePixelRatio || 1;
+      sc.width  = Math.floor(window.innerWidth  * dpr);
+      sc.height = Math.floor(window.innerHeight * dpr);
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeSpark();
+    window.addEventListener('resize', resizeSpark, { passive: true });
+
+    var sparks = [];
+    var SPARK_COUNT  = 10;
+    var SPARK_SIZE   = 11;
+    var SPARK_RADIUS = 38;
+    var DURATION     = 480;
+
+    document.addEventListener('click', function (e) {
+      var b = window._coinBounds;
+      if (!b) return;
+      var coinCX = b.dx + b.size / 2;
+      var coinCY = b.dy + b.size / 2 - (window.scrollY || 0);
+      var r      = b.size / 2;
+      var relX   = (e.clientX - coinCX) / r;
+      var relY   = (e.clientY - coinCY) / r;
+      if (relX * relX + relY * relY > 1) return;
+
+      var now = performance.now();
+      for (var i = 0; i < SPARK_COUNT; i++) {
+        sparks.push({
+          x: e.clientX, y: e.clientY,
+          angle: (2 * Math.PI * i) / SPARK_COUNT,
+          startTime: now
+        });
+      }
+    });
+
+    function drawSparks(ts) {
+      sctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      sparks = sparks.filter(function (sp) {
+        var elapsed  = ts - sp.startTime;
+        if (elapsed >= DURATION) return false;
+        var t        = elapsed / DURATION;
+        var eased    = t * (2 - t);
+        var dist     = eased * SPARK_RADIUS;
+        var len      = SPARK_SIZE * (1 - eased);
+        var alpha    = 1 - eased;
+        var x1 = sp.x + dist        * Math.cos(sp.angle);
+        var y1 = sp.y + dist        * Math.sin(sp.angle);
+        var x2 = sp.x + (dist+len)  * Math.cos(sp.angle);
+        var y2 = sp.y + (dist+len)  * Math.sin(sp.angle);
+        sctx.strokeStyle = 'rgba(255,165,0,' + alpha.toFixed(2) + ')';
+        sctx.lineWidth   = 2.2;
+        sctx.lineCap     = 'round';
+        sctx.beginPath();
+        sctx.moveTo(x1, y1);
+        sctx.lineTo(x2, y2);
+        sctx.stroke();
+        return true;
+      });
+      requestAnimationFrame(drawSparks);
+    }
+    requestAnimationFrame(drawSparks);
+  })();
+
+  /* ── Theme toggle ── */
+  (function () {
+    var root = document.documentElement;
+    var SUN  = '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+    var MOON = '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+    function syncIcons() {
+      var isLight = root.getAttribute('data-theme') === 'light';
+      var btn = document.getElementById('theme-btn');
+      if (btn) btn.innerHTML = isLight ? MOON : SUN;
+    }
+
+    syncIcons();
+
+    function toggle() {
+      var isLight = root.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('jcash-theme', 'dark');
+      } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('jcash-theme', 'light');
+      }
+      syncIcons();
+    }
+
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.addEventListener('click', toggle);
+  })();
+
+  /* ── Typing animation ── */
+  (function () {
+    var el = document.getElementById('typed-trusted');
+    if (!el) return;
+    var phrases = [
+      'Trusted by thousands',
+      'Built for the future',
+      'Powering real payments',
+      'A platform you can rely on',
+      'Your money, your control'
+    ];
+    var pi = 0, ci = 0, deleting = false;
+    function tick() {
+      var phrase = phrases[pi];
+      if (!deleting) {
+        el.textContent = phrase.slice(0, ci + 1);
+        ci++;
+        if (ci === phrase.length) { deleting = true; setTimeout(tick, 2200); return; }
+      } else {
+        el.textContent = phrase.slice(0, ci - 1);
+        ci--;
+        if (ci === 0) {
+          deleting = false;
+          pi = (pi + 1) % phrases.length;
+          setTimeout(tick, 350); return;
+        }
+      }
+      setTimeout(tick, deleting ? 38 : 72);
+    }
+    tick();
+  })();
+
+  /* ── Dot Grid ── */
+  (function () {
+    var canvas = document.getElementById('dot-grid-bg');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var DOT_R     = 2.2;
+    var GAP       = 22;
+    var PROXIMITY = 110;
+    var SHOCK_R   = 200;
+    var SHOCK_STR = 4.5;
+    var SPD_TRIG  = 1.2;
+    var FRICTION  = 0.87;
+    var SPRING_K  = 0.055;
+    var SPRING_D  = 0.72;
+
+    var ORANGE    = { r: 255, g: 122, b: 0 };
+    var dots      = [];
+    var ptr       = { x: -9999, y: -9999, vx: 0, vy: 0, lx: 0, ly: 0, lt: 0 };
+
+    function isLight() {
+      return document.documentElement.getAttribute('data-theme') === 'light';
+    }
+
+    function buildGrid() {
+      var dpr = window.devicePixelRatio || 1;
+      var W = window.innerWidth, H = window.innerHeight;
+      canvas.width  = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      var cell   = DOT_R * 2 + GAP;
+      var cols   = Math.floor((W + GAP) / cell);
+      var rows   = Math.floor((H + GAP) / cell);
+      var startX = (W - (cols * cell - GAP)) / 2 + DOT_R;
+      var startY = (H - (rows * cell - GAP)) / 2 + DOT_R;
+
+      dots = [];
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          dots.push({
+            cx: startX + c * cell, cy: startY + r * cell,
+            ox: 0, oy: 0,
+            vx: 0, vy: 0,
+            phase: 0
+          });
+        }
+      }
+    }
+
+    function draw() {
+      var W = window.innerWidth, H = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      var light     = isLight();
+      var base      = light ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
+      var baseAlpha = light ? 0.09 : 0.12;
+      var px = ptr.x, py = ptr.y;
+      var proxSq = PROXIMITY * PROXIMITY;
+
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+
+        if (d.phase === 1) {
+          d.vx *= FRICTION; d.vy *= FRICTION;
+          d.ox += d.vx;    d.oy += d.vy;
+          if (Math.abs(d.vx) < 0.25 && Math.abs(d.vy) < 0.25) d.phase = 2;
+        } else if (d.phase === 2) {
+          d.vx = (d.vx - SPRING_K * d.ox) * SPRING_D;
+          d.vy = (d.vy - SPRING_K * d.oy) * SPRING_D;
+          d.ox += d.vx; d.oy += d.vy;
+          if (Math.abs(d.ox) < 0.04 && Math.abs(d.oy) < 0.04 && Math.abs(d.vx) < 0.04) {
+            d.ox = 0; d.oy = 0; d.vx = 0; d.vy = 0; d.phase = 0;
+          }
+        }
+
+        var ox = d.cx + d.ox, oy = d.cy + d.oy;
+        var ddx = d.cx - px, ddy = d.cy - py;
+        var dsq = ddx * ddx + ddy * ddy;
+        var rr, gg, bb, aa;
+
+        if (dsq < proxSq) {
+          var t = 1 - Math.sqrt(dsq) / PROXIMITY;
+          t = t * t * (3 - 2 * t);
+          rr = (base.r + (ORANGE.r - base.r) * t) | 0;
+          gg = (base.g + (ORANGE.g - base.g) * t) | 0;
+          bb = (base.b + (ORANGE.b - base.b) * t) | 0;
+          aa = baseAlpha + t * (0.85 - baseAlpha);
+        } else {
+          rr = base.r; gg = base.g; bb = base.b; aa = baseAlpha;
+        }
+
+        ctx.beginPath();
+        ctx.arc(ox, oy, DOT_R, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + rr + ',' + gg + ',' + bb + ',' + aa.toFixed(2) + ')';
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    function onMove(e) {
+      var now = performance.now();
+      var dt  = ptr.lt ? now - ptr.lt : 16;
+      var vx  = (e.clientX - ptr.lx) / dt * 16;
+      var vy  = (e.clientY - ptr.ly) / dt * 16;
+      ptr.lt = now; ptr.lx = e.clientX; ptr.ly = e.clientY;
+      ptr.vx = vx; ptr.vy = vy;
+      ptr.x  = e.clientX; ptr.y = e.clientY;
+
+      var speed = Math.sqrt(vx * vx + vy * vy);
+      if (speed > SPD_TRIG) {
+        var proxSq = PROXIMITY * PROXIMITY;
+        for (var i = 0; i < dots.length; i++) {
+          var d = dots[i];
+          if (d.phase !== 0) continue;
+          var dx = d.cx - ptr.x, dy = d.cy - ptr.y;
+          var dsq = dx * dx + dy * dy;
+          if (dsq < proxSq) {
+            var t = (1 - Math.sqrt(dsq) / PROXIMITY) * 0.28;
+            d.phase = 1;
+            d.vx = vx * t; d.vy = vy * t;
+          }
+        }
+      }
+    }
+
+    function onShock(e) {
+      var cx = e.clientX, cy = e.clientY;
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        var dx = d.cx - cx, dy = d.cy - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < SHOCK_R && dist > 0) {
+          var falloff = (1 - dist / SHOCK_R);
+          d.phase = 1;
+          d.vx = (dx / dist) * SHOCK_STR * falloff * 2.5;
+          d.vy = (dy / dist) * SHOCK_STR * falloff * 2.5;
+        }
+      }
+    }
+
+    function onTouch(e) {
+      if (e.touches[0]) { ptr.x = e.touches[0].clientX; ptr.y = e.touches[0].clientY; }
+    }
+
+    buildGrid();
+    window.addEventListener('resize',     buildGrid,                    { passive: true });
+    window.addEventListener('mousemove',  onMove,                       { passive: true });
+    window.addEventListener('mouseleave', function () { ptr.x = -9999; ptr.y = -9999; });
+    window.addEventListener('click',      onShock);
+    window.addEventListener('touchmove',  onTouch,                      { passive: true });
+    window.addEventListener('touchend',   function () { ptr.x = -9999; ptr.y = -9999; }, { passive: true });
+
+    draw();
+  })();
+
+  /* ── Crypto Ticker ── */
+  (function () {
+    var COINS = [
+      { id: 'bitcoin',       sym: 'BTC', name: 'Bitcoin',  logo: 'https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png' },
+      { id: 'ethereum',      sym: 'ETH', name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/thumb/ethereum.png' },
+      { id: 'solana',        sym: 'SOL', name: 'Solana',   logo: 'https://assets.coingecko.com/coins/images/4128/thumb/solana.png' },
+      { id: 'binancecoin',   sym: 'BNB', name: 'BNB',      logo: 'https://assets.coingecko.com/coins/images/825/thumb/bnb-icon2_2x.png' },
+      { id: 'ripple',        sym: 'XRP', name: 'XRP',      logo: 'https://assets.coingecko.com/coins/images/44/thumb/xrp-symbol-white-128.png' },
+      { id: 'cardano',       sym: 'ADA', name: 'Cardano',  logo: 'https://assets.coingecko.com/coins/images/975/thumb/cardano.png' },
+    ];
+
+    var FALLBACK = [
+      { id:'bitcoin',     sym:'BTC', name:'Bitcoin',  price:65000,  pct:2.41,  vol:38e9 },
+      { id:'ethereum',    sym:'ETH', name:'Ethereum', price:3400,   pct:1.78,  vol:18e9 },
+      { id:'solana',      sym:'SOL', name:'Solana',   price:172,    pct:3.15,  vol:4.2e9 },
+      { id:'binancecoin', sym:'BNB', name:'BNB',      price:580,    pct:0.92,  vol:2.1e9 },
+      { id:'ripple',      sym:'XRP', name:'XRP',      price:0.58,   pct:-0.45, vol:1.8e9 },
+      { id:'cardano',     sym:'ADA', name:'Cardano',  price:0.46,   pct:-1.22, vol:0.9e9 },
+    ];
+
+    var liveData  = {};
+    var sparkSVGs = {};
+
+    function fmtPrice(n) {
+      if (n >= 1000) return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (n >= 1)    return '$' + n.toFixed(3);
+      return '$' + n.toFixed(5);
+    }
+    function fmtVol(n) {
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+      if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+      return '$' + n.toLocaleString();
+    }
+
+    function generateSpark(coinId, pct) {
+      var up    = pct >= 0;
+      var color = up ? '#10b981' : '#ef4444';
+      var W = 220, H = 46, N = 24;
+      var vals = [];
+      var v = up ? 0.6 : 0.4;
+      for (var i = 0; i < N; i++) {
+        var drift = (up ? 1 : -1) * (0.4 / N);
+        v += drift + (Math.random() - 0.5) * 0.22;
+        v = Math.max(0.04, Math.min(0.96, v));
+        vals.push(v);
+      }
+      var mn = Math.min.apply(null, vals);
+      var mx = Math.max.apply(null, vals);
+      var rng = (mx - mn) < 0.05 ? 0.5 : (mx - mn);
+      var norm = vals.map(function (v) { return (v - mn) / rng; });
+      var pts = norm.map(function (n, i) {
+        var x = (i / (N - 1)) * W;
+        var y = (H - 4) - n * (H - 8);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      }).join(' ');
+      var fy = ((H - 4) - norm[0] * (H - 8)).toFixed(1);
+      var ly = ((H - 4) - norm[N - 1] * (H - 8)).toFixed(1);
+      var fillPts = '0,' + fy + ' ' + pts + ' ' + W + ',' + ly + ' ' + W + ',' + (H + 2) + ' 0,' + (H + 2);
+      var gid = 'sg' + coinId.replace(/[^a-z0-9]/gi, '');
+      return '<svg class="ticker-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.28"/>' +
+        '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        '<polygon points="' + fillPts + '" fill="url(#' + gid + ')"/>' +
+        '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '</svg>';
+    }
+
+    function cardHTML(coin, d) {
+      var up    = d.pct >= 0;
+      var arrow = up ? '▲' : '▼';
+      var logo  = COINS.find(function (c) { return c.id === coin.id; });
+      var imgSrc = logo ? logo.logo : '';
+      return '<div class="ticker-card ' + (up ? 'up' : 'dn') + '">' +
+        '<div class="ticker-card-top">' +
+          '<div class="ticker-coin-info">' +
+            (imgSrc ? '<img class="ticker-coin-logo" src="' + imgSrc + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
+            '<div><div class="ticker-coin-name">' + d.name + '</div><div class="ticker-coin-sym">' + d.sym + '</div></div>' +
+          '</div>' +
+          '<div class="ticker-badge ' + (up ? 'up' : 'dn') + '">' + arrow + ' ' + Math.abs(d.pct).toFixed(2) + '%</div>' +
+        '</div>' +
+        '<div class="ticker-price" data-tid="' + coin.id + '-price">' + fmtPrice(d.price) + '</div>' +
+        '<div class="ticker-spark-wrap">' + (sparkSVGs[coin.id] || '') + '</div>' +
+        '<div class="ticker-vol">Vol 24h: ' + fmtVol(d.vol) + '</div>' +
+      '</div>';
+    }
+
+    function render() {
+      var html = COINS.map(function (c) {
+        var d = liveData[c.id];
+        if (!d) return '';
+        return cardHTML(c, d);
+      }).join('');
+      var doubled = html + html;
+      var el = document.getElementById('ticker-track');
+      if (el) el.innerHTML = doubled;
+    }
+
+    /* Binance symbol → internal coin id */
+    var SYM_MAP = {
+      'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana',
+      'BNBUSDT': 'binancecoin', 'XRPUSDT': 'ripple', 'ADAUSDT': 'cardano'
+    };
+
+    function fetchPrices() {
+      var symbols = Object.keys(SYM_MAP);
+      var url = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' +
+                encodeURIComponent(JSON.stringify(symbols));
+      fetch(url)
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (data) {
+          if (!Array.isArray(data)) throw new Error('bad');
+          data.forEach(function (item) {
+            var coinId = SYM_MAP[item.symbol];
+            if (!coinId) return;
+            var coin = COINS.find(function (c) { return c.id === coinId; });
+            if (!coin) return;
+            var price = parseFloat(item.lastPrice)          || 0;
+            var pct   = parseFloat(item.priceChangePercent) || 0;
+            var vol   = parseFloat(item.quoteVolume)        || 0;
+            liveData[coinId]  = { name: coin.name, sym: coin.sym, price: price, pct: pct, vol: vol };
+            sparkSVGs[coinId] = generateSpark(coinId, pct);
+          });
+          if (COINS.some(function (c) { return !!liveData[c.id]; })) render();
+        })
+        .catch(function () {
+          /* Only use fallback if we have no live data at all */
+          if (!COINS.some(function (c) { return !!liveData[c.id]; })) {
+            FALLBACK.forEach(function (f) {
+              liveData[f.id]  = { name: f.name, sym: f.sym, price: f.price, pct: f.pct, vol: f.vol };
+              sparkSVGs[f.id] = generateSpark(f.id, f.pct);
+            });
+            render();
+          }
+        });
+    }
+
+    function tick() {
+      COINS.forEach(function (coin) {
+        var d = liveData[coin.id];
+        if (!d) return;
+        d.price *= (1 + (Math.random() - 0.499) * 0.0003);
+        d.pct   += (Math.random() - 0.5) * 0.04;
+        var track = document.getElementById('ticker-track');
+        if (!track) return;
+        track.querySelectorAll('[data-tid="' + coin.id + '-price"]').forEach(function (el) {
+          el.textContent = fmtPrice(d.price);
+        });
+      });
+    }
+
+    fetchPrices();
+    setInterval(fetchPrices, 30000);
+    setInterval(tick, 3000);
+  })();
+
+  /* ── App showcase slides ── */
+  (function () {
+    var slides = Array.from(document.querySelectorAll('.app-slide'));
+    var rights = Array.from(document.querySelectorAll('.app-right'));
+    var dots   = Array.from(document.querySelectorAll('.slide-dot-btn'));
+    if (!slides.length) return;
+    var current = 0;
+    var total   = slides.length;
+    var timer;
+
+    function goTo(idx) {
+      var next = (idx + total) % total;
+      [slides[current], rights[current]].forEach(function (el) {
+        if (!el) return;
+        el.classList.remove('s-active'); el.classList.add('s-inactive');
+      });
+      dots[current].classList.remove('s-active');
+      current = next;
+      [slides[current], rights[current]].forEach(function (el) {
+        if (!el) return;
+        el.classList.remove('s-inactive'); el.classList.add('s-active');
+      });
+      dots[current].classList.add('s-active');
+    }
+
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        clearInterval(timer);
+        goTo(parseInt(this.dataset.target, 10));
+        startTimer();
+      });
+    });
+
+    function startTimer() {
+      timer = setInterval(function () { goTo(current + 1); }, 5000);
+    }
+    startTimer();
+  })();
+
+  /* ── Floating Nav — hide on scroll down, reveal on scroll up ── */
+  (function () {
+    var nav = document.querySelector('nav.site-nav');
+    if (!nav) return;
+    var lastY = 0, ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var y = window.scrollY;
+        if (y > lastY && y > 80) {
+          nav.classList.add('nav-hidden');    /* scrolling down → slide up */
+        } else {
+          nav.classList.remove('nav-hidden'); /* scrolling up  → slide down */
+        }
+        lastY = y;
+        ticking = false;
+      });
+    }, { passive: true });
+  })();
+  </script>
+
+  <!-- Download bar — mobile only -->
+  <div class="download-bar" id="dl-bar">
+    <div class="download-bar-text">
+      <div class="download-bar-title">JCASH for Android</div>
+      <div class="download-bar-sub">Free · 40MB · v1.0</div>
+    </div>
+    <a class="download-bar-btn" href="https://jcashtrial34921.z13.web.core.windows.net/JCASH.apk" download="JCASH.apk">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+    <button class="download-bar-close" id="dl-close" aria-label="Dismiss">✕</button>
+  </div>
+  <script>
+    (function() {
+      var bar = document.getElementById('dl-bar');
+      if (localStorage.getItem('dl-dismissed')) { bar.style.display = 'none'; return; }
+      document.getElementById('dl-close').addEventListener('click', function() {
+        localStorage.setItem('dl-dismissed', '1');
+        bar.style.display = 'none';
+      });
+    })();
+  </script>
+
+</body>
+</html>
