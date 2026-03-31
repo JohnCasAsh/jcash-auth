@@ -1,12 +1,18 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Phone, ArrowLeft } from 'lucide-react'
+import { RecaptchaVerifier, type MultiFactorError, type MultiFactorResolver, type ConfirmationResult } from 'firebase/auth'
 import { cn } from '@/lib/utils'
 import { DotGrid } from './dot-grid'
-import { signInEmail, signInGoogle, signInGithub } from '@/lib/auth-actions'
+import { auth } from '@/lib/firebase'
+import {
+  signInEmail, signInGoogle, signInGithub,
+  startPhoneSignIn, confirmPhoneOTP,
+  startMFAChallenge, confirmMFAOTP,
+} from '@/lib/auth-actions'
 
 function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (
@@ -37,6 +43,8 @@ const GoogleIcon = () => (
   </svg>
 )
 
+type PhoneStep = 'idle' | 'enter-phone' | 'enter-otp'
+
 export function SignInCard() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
@@ -47,6 +55,17 @@ export function SignInCard() {
   const [error, setError] = useState('')
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState(false)
+
+  // Phone sign-in state
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>('idle')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [otp, setOtp] = useState('')
+
+  // MFA state
+  const [mfaState, setMfaState] = useState<{ resolver: MultiFactorResolver; verificationId: string } | null>(null)
+
+  const recaptchaRef = useRef<RecaptchaVerifier | null>(null)
+  const confirmationRef = useRef<ConfirmationResult | null>(null)
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -60,6 +79,21 @@ export function SignInCard() {
   }
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0) }
 
+  function getRecaptcha() {
+    if (!recaptchaRef.current) {
+      recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {},
+      })
+    }
+    return recaptchaRef.current
+  }
+
+  function resetRecaptcha() {
+    recaptchaRef.current?.clear()
+    recaptchaRef.current = null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -68,7 +102,20 @@ export function SignInCard() {
       await signInEmail(email, password)
       router.push('/dashboard')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Sign in failed')
+      if (err && typeof err === 'object' && 'code' in err &&
+          (err as { code: string }).code === 'auth/multi-factor-auth-required') {
+        try {
+          const verifier = getRecaptcha()
+          const mfa = await startMFAChallenge(err as MultiFactorError, verifier)
+          setMfaState(mfa)
+          setOtp('')
+        } catch (mfaErr: unknown) {
+          setError(mfaErr instanceof Error ? mfaErr.message : 'Failed to send 2FA code')
+          resetRecaptcha()
+        }
+      } else {
+        setError(err instanceof Error ? err.message : 'Sign in failed')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -87,9 +134,75 @@ export function SignInCard() {
     }
   }
 
+  const handleSendOTP = async () => {
+    if (!phoneNumber.trim()) { setError('Please enter your phone number'); return }
+    setError('')
+    setIsLoading(true)
+    try {
+      const verifier = getRecaptcha()
+      confirmationRef.current = await startPhoneSignIn(phoneNumber, verifier)
+      setOtp('')
+      setPhoneStep('enter-otp')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send code')
+      resetRecaptcha()
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleVerifyPhoneOTP = async () => {
+    if (!confirmationRef.current) return
+    setError('')
+    setIsLoading(true)
+    try {
+      await confirmPhoneOTP(confirmationRef.current, otp)
+      router.push('/dashboard')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid code')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleVerifyMFAOTP = async () => {
+    if (!mfaState) return
+    setError('')
+    setIsLoading(true)
+    try {
+      await confirmMFAOTP(mfaState.resolver, mfaState.verificationId, otp)
+      router.push('/dashboard')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid 2FA code')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const resetToEmail = () => {
+    setPhoneStep('idle')
+    setMfaState(null)
+    setOtp('')
+    setError('')
+    resetRecaptcha()
+  }
+
+  const isPhoneMode = phoneStep !== 'idle'
+  const isMFAMode = !!mfaState
+
+  const cardTitle = isMFAMode ? 'Verify Identity' : isPhoneMode ? 'Sign in with Phone' : 'Welcome Back'
+  const cardSubtitle = isMFAMode
+    ? 'Enter the SMS code sent to your phone'
+    : isPhoneMode && phoneStep === 'enter-otp'
+    ? `Code sent to ${phoneNumber}`
+    : isPhoneMode
+    ? 'Enter your phone number to receive a code'
+    : 'Sign in to your JCASH account'
+
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-[#0a0a0a] relative overflow-x-hidden overflow-y-auto flex items-center justify-center py-10 px-4">
       <DotGrid />
+      <div id="recaptcha-container" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50vw] h-[35vh] rounded-b-full bg-orange-500/[0.06] blur-[100px] pointer-events-none" style={{ zIndex: 1 }} />
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[40vw] h-[25vh] rounded-t-full bg-orange-500/[0.05] blur-[100px] pointer-events-none" style={{ zIndex: 1 }} />
 
@@ -130,84 +243,152 @@ export function SignInCard() {
               </motion.div>
               <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.04em' }}>
-                Welcome Back
+                {cardTitle}
               </motion.h1>
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="text-gray-500 dark:text-white/45 text-xs">
-                Sign in to your JCASH account
+                {cardSubtitle}
               </motion.p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <Mail className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200', focusedInput === 'email' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
-                <Input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)}
-                  onFocus={() => setFocusedInput('email')} onBlur={() => setFocusedInput(null)} className="pl-10" />
-              </div>
+            <AnimatePresence mode="wait">
+              {/* MFA OTP */}
+              {isMFAMode && (
+                <motion.div key="mfa" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  <Input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code"
+                    value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                    className="text-center tracking-[0.3em] text-lg font-bold" />
+                  {error && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{error}</p>}
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleVerifyMFAOTP} disabled={isLoading || otp.length < 6}
+                    className="w-full h-11 rounded-xl bg-orange-500 text-black font-bold text-sm shadow-lg shadow-orange-500/25 hover:bg-orange-400 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                    style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.06em' }}>
+                    {isLoading ? <div className="w-4 h-4 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <>Verify <ArrowRight className="w-4 h-4" /></>}
+                  </motion.button>
+                  <button type="button" onClick={resetToEmail} className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 transition-colors">
+                    <ArrowLeft className="w-3 h-3" /> Back to sign in
+                  </button>
+                </motion.div>
+              )}
 
-              <div className="relative">
-                <Lock className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200', focusedInput === 'password' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
-                <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                  onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)} className="pl-10 pr-10" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/70 transition-colors">
-                  {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
+              {/* Phone — enter number */}
+              {!isMFAMode && phoneStep === 'enter-phone' && (
+                <motion.div key="phone-input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                   <div className="relative">
-                    <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)}
-                      className="appearance-none h-4 w-4 rounded border border-black/20 dark:border-white/20 bg-black/5 dark:bg-white/5 checked:bg-orange-500 checked:border-orange-500 transition-all duration-200" />
-                    {rememberMe && (
-                      <svg className="absolute inset-0 m-auto w-2.5 h-2.5 text-black pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
+                    <Phone className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors', focusedInput === 'phone' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
+                    <Input type="tel" placeholder="+63 XXX XXX XXXX" value={phoneNumber}
+                      onChange={e => setPhoneNumber(e.target.value)}
+                      onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
+                      className="pl-10" />
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-white/50">Remember me</span>
-                </label>
-                <Link href="/forgot-password" className="text-xs text-orange-400/80 hover:text-orange-400 transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
+                  {error && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{error}</p>}
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleSendOTP} disabled={isLoading}
+                    className="w-full h-11 rounded-xl bg-orange-500 text-black font-bold text-sm shadow-lg shadow-orange-500/25 hover:bg-orange-400 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                    style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.06em' }}>
+                    {isLoading ? <div className="w-4 h-4 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <>Send Code <ArrowRight className="w-4 h-4" /></>}
+                  </motion.button>
+                  <button type="button" onClick={resetToEmail} className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 transition-colors">
+                    <ArrowLeft className="w-3 h-3" /> Back to email sign in
+                  </button>
+                </motion.div>
+              )}
 
-              {error && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{error}</p>}
+              {/* Phone — enter OTP */}
+              {!isMFAMode && phoneStep === 'enter-otp' && (
+                <motion.div key="phone-otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  <Input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code"
+                    value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                    className="text-center tracking-[0.3em] text-lg font-bold" />
+                  {error && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{error}</p>}
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleVerifyPhoneOTP} disabled={isLoading || otp.length < 6}
+                    className="w-full h-11 rounded-xl bg-orange-500 text-black font-bold text-sm shadow-lg shadow-orange-500/25 hover:bg-orange-400 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                    style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.06em' }}>
+                    {isLoading ? <div className="w-4 h-4 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <>Verify <ArrowRight className="w-4 h-4" /></>}
+                  </motion.button>
+                  <button type="button" onClick={() => { setPhoneStep('enter-phone'); setOtp(''); setError('') }} className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 transition-colors">
+                    <ArrowLeft className="w-3 h-3" /> Change number
+                  </button>
+                </motion.div>
+              )}
 
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} type="submit" disabled={isLoading}
-                className="w-full h-11 rounded-xl bg-orange-500 text-black font-bold text-sm shadow-lg shadow-orange-500/25 hover:bg-orange-400 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
-                style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.06em' }}>
-                <AnimatePresence mode="wait">
-                  {isLoading
-                    ? <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><div className="w-4 h-4 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /></motion.div>
-                    : <motion.span key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">Sign In <ArrowRight className="w-4 h-4" /></motion.span>}
-                </AnimatePresence>
-              </motion.button>
+              {/* Normal email/password form */}
+              {!isMFAMode && phoneStep === 'idle' && (
+                <motion.form key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-4">
+                  <div className="relative">
+                    <Mail className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200', focusedInput === 'email' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
+                    <Input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)}
+                      onFocus={() => setFocusedInput('email')} onBlur={() => setFocusedInput(null)} className="pl-10" />
+                  </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-black/8 dark:bg-white/8" />
-                <span className="text-xs text-gray-400 dark:text-white/30">or continue with</span>
-                <div className="flex-1 h-px bg-black/8 dark:bg-white/8" />
-              </div>
+                  <div className="relative">
+                    <Lock className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200', focusedInput === 'password' ? 'text-orange-400' : 'text-gray-400 dark:text-white/30')} />
+                    <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+                      onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)} className="pl-10 pr-10" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/70 transition-colors">
+                      {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => handleOAuth('github')} disabled={!!oauthLoading}
-                  className="flex items-center justify-center gap-2 h-10 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-gray-800 dark:text-white text-xs font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 disabled:opacity-50">
-                  {oauthLoading === 'github' ? <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-800 dark:border-t-white rounded-full animate-spin" /> : <GithubIcon />}
-                  GitHub
-                </button>
-                <button type="button" onClick={() => handleOAuth('google')} disabled={!!oauthLoading}
-                  className="flex items-center justify-center gap-2 h-10 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-gray-800 dark:text-white text-xs font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 disabled:opacity-50">
-                  {oauthLoading === 'google' ? <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-800 dark:border-t-white rounded-full animate-spin" /> : <GoogleIcon />}
-                  Google
-                </button>
-              </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative">
+                        <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)}
+                          className="appearance-none h-4 w-4 rounded border border-black/20 dark:border-white/20 bg-black/5 dark:bg-white/5 checked:bg-orange-500 checked:border-orange-500 transition-all duration-200" />
+                        {rememberMe && (
+                          <svg className="absolute inset-0 m-auto w-2.5 h-2.5 text-black pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-white/50">Remember me</span>
+                    </label>
+                    <Link href="/forgot-password" className="text-xs text-orange-400/80 hover:text-orange-400 transition-colors">
+                      Forgot password?
+                    </Link>
+                  </div>
 
-              <p className="text-center text-xs text-gray-500 dark:text-white/45 pt-1">
-                Don&apos;t have an account?{' '}
-                <Link href="/sign-up" className="text-orange-500 dark:text-orange-400 hover:text-orange-400 dark:hover:text-orange-300 font-semibold transition-colors">Sign up</Link>
-              </p>
-            </form>
+                  {error && <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">{error}</p>}
+
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} type="submit" disabled={isLoading}
+                    className="w-full h-11 rounded-xl bg-orange-500 text-black font-bold text-sm shadow-lg shadow-orange-500/25 hover:bg-orange-400 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
+                    style={{ fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.06em' }}>
+                    <AnimatePresence mode="wait">
+                      {isLoading
+                        ? <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><div className="w-4 h-4 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /></motion.div>
+                        : <motion.span key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">Sign In <ArrowRight className="w-4 h-4" /></motion.span>}
+                    </AnimatePresence>
+                  </motion.button>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-black/8 dark:bg-white/8" />
+                    <span className="text-xs text-gray-400 dark:text-white/30">or continue with</span>
+                    <div className="flex-1 h-px bg-black/8 dark:bg-white/8" />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <button type="button" onClick={() => handleOAuth('github')} disabled={!!oauthLoading}
+                      className="flex items-center justify-center gap-1.5 h-10 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-gray-800 dark:text-white text-xs font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 disabled:opacity-50">
+                      {oauthLoading === 'github' ? <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-800 dark:border-t-white rounded-full animate-spin" /> : <GithubIcon />}
+                      GitHub
+                    </button>
+                    <button type="button" onClick={() => handleOAuth('google')} disabled={!!oauthLoading}
+                      className="flex items-center justify-center gap-1.5 h-10 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-gray-800 dark:text-white text-xs font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 disabled:opacity-50">
+                      {oauthLoading === 'google' ? <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-800 dark:border-t-white rounded-full animate-spin" /> : <GoogleIcon />}
+                      Google
+                    </button>
+                    <button type="button" onClick={() => { setPhoneStep('enter-phone'); setError('') }} disabled={!!oauthLoading}
+                      className="flex items-center justify-center gap-1.5 h-10 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-gray-800 dark:text-white text-xs font-semibold hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 disabled:opacity-50">
+                      <Phone className="w-4 h-4 flex-shrink-0" />
+                      Phone
+                    </button>
+                  </div>
+
+                  <p className="text-center text-xs text-gray-500 dark:text-white/45 pt-1">
+                    Don&apos;t have an account?{' '}
+                    <Link href="/sign-up" className="text-orange-500 dark:text-orange-400 hover:text-orange-400 dark:hover:text-orange-300 font-semibold transition-colors">Sign up</Link>
+                  </p>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </motion.div>
