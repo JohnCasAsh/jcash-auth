@@ -643,6 +643,151 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
       .app-showcase { gap: 5rem; }
       .app-mockup-img { width: min(240px, 22vw); }
     }
+
+    /* ================================================
+       CONTACTS SECTION
+    ================================================ */
+    .ct-section {
+      padding: 5rem 1.5rem 5rem;
+      background: #0a0a0a;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .ct-inner { max-width: 1000px; margin: 0 auto; }
+    .ct-header { text-align: center; margin-bottom: 3rem; }
+    .ct-heading {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.75rem, 5vw, 2.75rem); font-weight: 900;
+      color: #fff; letter-spacing: 0.04em; margin-bottom: 0.75rem;
+    }
+    .ct-sub { font-size: 0.95rem; color: rgba(255,255,255,0.40); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+    .ct-grid {
+      display: grid; grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    @media (min-width: 768px) { .ct-grid { grid-template-columns: 1fr 1fr; gap: 3rem; } }
+    /* Info cards */
+    .ct-info-col { display: flex; flex-direction: column; gap: 1rem; }
+    .ct-info-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 1rem;
+    }
+    .ct-info-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,122,0,0.12); border: 1px solid rgba(255,122,0,0.22);
+      display: flex; align-items: center; justify-content: center; color: #ff7a00;
+    }
+    .ct-info-icon svg { width: 18px; height: 18px; }
+    .ct-info-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 0.25rem; }
+    .ct-info-val { font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 0.2rem; }
+    .ct-info-desc { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+    .ct-socials { display: flex; gap: 10px; margin-top: 0.5rem; }
+    .ct-social-link {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11);
+      color: rgba(255,255,255,0.50);
+      transition: background 160ms ease, color 160ms ease;
+    }
+    .ct-social-link:hover { background: rgba(255,255,255,0.14); color: #fff; }
+    .ct-social-link svg { width: 15px; height: 15px; display: block; }
+    /* Form */
+    .ct-form { display: flex; flex-direction: column; gap: 1.2rem; }
+    .ct-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .ct-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .ct-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.40); }
+    .ct-input, .ct-textarea {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px; padding: 0.65rem 1rem;
+      color: #fff; font-size: 0.9rem; font-family: inherit; width: 100%;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+    .ct-input::placeholder, .ct-textarea::placeholder { color: rgba(255,255,255,0.25); }
+    .ct-input:focus, .ct-textarea:focus { outline: none; border-color: rgba(255,122,0,0.5); background: rgba(255,255,255,0.08); }
+    .ct-textarea { resize: vertical; min-height: 120px; }
+    .ct-submit {
+      background: #ff7a00; color: #000;
+      border: none; border-radius: 10px;
+      padding: 0.85rem 2rem; width: 100%;
+      font-size: 0.875rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 20px rgba(255,122,0,0.35);
+      transition: box-shadow 160ms ease, transform 160ms ease;
+    }
+    .ct-submit:hover { box-shadow: 0 6px 32px rgba(255,122,0,0.55); transform: translateY(-1px); }
+    .ct-submit:active { transform: scale(0.98); }
+
+    /* Animated Dropdown */
+    .ct-dropdown { position: relative; width: 100%; }
+    .ct-dropdown-btn {
+      width: 100%; padding: 0.65rem 1rem;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.9rem; font-family: inherit; cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+    .ct-dropdown-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.09); }
+    .ct-dropdown-btn[aria-expanded="true"] { border-color: rgba(255,122,0,0.5); background: rgba(255,255,255,0.08); }
+    .ct-chevron {
+      width: 18px; height: 18px; flex-shrink: 0;
+      transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .ct-dropdown-btn[aria-expanded="true"] .ct-chevron { transform: rotate(180deg); }
+    .ct-dropdown-list {
+      position: absolute; top: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%); width: 100%; z-index: 50;
+      background: rgba(18,18,18,0.98); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      transform-origin: top center;
+      animation: ct-dd-open 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes ct-dd-open {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.96); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+    .ct-dropdown-list[hidden] { display: none; }
+    .ct-dropdown-item {
+      display: block; width: 100%; padding: 0.65rem 1rem; text-align: left;
+      font-size: 0.875rem; font-family: inherit; color: rgba(255,255,255,0.75);
+      background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.07);
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+      opacity: 0; animation: ct-item-slide 0.18s ease forwards;
+    }
+    .ct-dropdown-item:last-child { border-bottom: none; }
+    .ct-dropdown-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .ct-dropdown-item.ct-selected { color: #ff7a00; background: rgba(255,122,0,0.08); }
+    .ct-dropdown-item:nth-child(1) { animation-delay: 0.00s; }
+    .ct-dropdown-item:nth-child(2) { animation-delay: 0.03s; }
+    .ct-dropdown-item:nth-child(3) { animation-delay: 0.06s; }
+    .ct-dropdown-item:nth-child(4) { animation-delay: 0.09s; }
+    @keyframes ct-item-slide {
+      from { opacity: 0; transform: translateX(-16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Light mode — contacts */
+    html[data-theme="light"] .ct-section { background: #f0f0f0; border-top-color: rgba(0,0,0,0.08); }
+    html[data-theme="light"] .ct-heading { color: #0a0a0a; }
+    html[data-theme="light"] .ct-sub { color: rgba(0,0,0,0.45); }
+    html[data-theme="light"] .ct-info-card { background: #fff; border-color: rgba(0,0,0,0.09); }
+    html[data-theme="light"] .ct-info-label { color: rgba(0,0,0,0.35); }
+    html[data-theme="light"] .ct-info-val { color: #0a0a0a; }
+    html[data-theme="light"] .ct-info-desc { color: rgba(0,0,0,0.4); }
+    html[data-theme="light"] .ct-label { color: rgba(0,0,0,0.45); }
+    html[data-theme="light"] .ct-input,
+    html[data-theme="light"] .ct-textarea { background: #fff; border-color: rgba(0,0,0,0.15); color: #0a0a0a; }
+    html[data-theme="light"] .ct-input::placeholder,
+    html[data-theme="light"] .ct-textarea::placeholder { color: rgba(0,0,0,0.30); }
+    html[data-theme="light"] .ct-dropdown-btn { background: #fff; border-color: rgba(0,0,0,0.15); color: #0a0a0a; }
+    html[data-theme="light"] .ct-dropdown-list { background: #fff; border-color: rgba(0,0,0,0.12); }
+    html[data-theme="light"] .ct-dropdown-item { color: rgba(0,0,0,0.75); border-bottom-color: rgba(0,0,0,0.07); }
+    html[data-theme="light"] .ct-dropdown-item:hover { background: rgba(0,0,0,0.05); color: #0a0a0a; }
+    html[data-theme="light"] .ct-social-link { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.50); }
   </style>
 </head>
 <body>
@@ -654,6 +799,7 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
     <ul class="nav-links" role="list">
       <li><a href="#features">Features</a></li>
       <li><a href="#about">About</a></li>
+      <li><a href="#contacts">Contacts</a></li>
     </ul>
     <div class="nav-actions">
       <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
@@ -764,6 +910,96 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
   </main>
 
 
+
+  <section class="ct-section" id="contacts" aria-label="Contacts">
+    <div class="ct-inner">
+      <div class="ct-header">
+        <h2 class="ct-heading">Get In Touch</h2>
+        <p class="ct-sub">Have questions, feedback, or want to partner with us? We respond within 24 hours.</p>
+      </div>
+      <div class="ct-grid">
+        <!-- Info cards -->
+        <div class="ct-info-col">
+          <div class="ct-info-card">
+            <div class="ct-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div>
+              <p class="ct-info-label">Support</p>
+              <p class="ct-info-val">admin@jcash.online</p>
+              <p class="ct-info-desc">For help with your account or transactions</p>
+            </div>
+          </div>
+          <div class="ct-info-card">
+            <div class="ct-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <div>
+              <p class="ct-info-label">Business</p>
+              <p class="ct-info-val">johnasleylunnay@gmail.com</p>
+              <p class="ct-info-desc">Partnerships, Integrations &amp; enterprise</p>
+            </div>
+          </div>
+          <div class="ct-info-card">
+            <div class="ct-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <p class="ct-info-label">Response Time</p>
+              <p class="ct-info-val">Within 24 hours</p>
+              <p class="ct-info-desc">Mon–Fri, 9AM–6PM PHT</p>
+            </div>
+          </div>
+          <div class="ct-socials">
+            <a href="#" class="ct-social-link" aria-label="Twitter / X">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" class="ct-social-link" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            </a>
+            <a href="#" class="ct-social-link" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+          </div>
+        </div>
+        <!-- Form -->
+        <div>
+          <form class="ct-form" onsubmit="ctSubmit(event)">
+            <div class="ct-field-row">
+              <div class="ct-field">
+                <label class="ct-label">Name</label>
+                <input class="ct-input" type="text" placeholder="John Doe" required />
+              </div>
+              <div class="ct-field">
+                <label class="ct-label">Email</label>
+                <input class="ct-input" type="email" placeholder="you@email.com" required />
+              </div>
+            </div>
+            <div class="ct-field">
+              <label class="ct-label">Subject</label>
+              <div class="ct-dropdown" id="ct-dd">
+                <button type="button" class="ct-dropdown-btn" id="ct-dd-btn" onclick="ctToggle()" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="ct-dd-val">General Inquiry</span>
+                  <svg class="ct-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="ct-dropdown-list" id="ct-dd-list" hidden role="listbox">
+                  <button type="button" class="ct-dropdown-item ct-selected" onclick="ctPick(this,'General Inquiry')">General Inquiry</button>
+                  <button type="button" class="ct-dropdown-item" onclick="ctPick(this,'Technical Support')">Technical Support</button>
+                  <button type="button" class="ct-dropdown-item" onclick="ctPick(this,'Business Partnership')">Business Partnership</button>
+                  <button type="button" class="ct-dropdown-item" onclick="ctPick(this,'Other')">Other</button>
+                </div>
+              </div>
+            </div>
+            <div class="ct-field">
+              <label class="ct-label">Message</label>
+              <textarea class="ct-textarea" placeholder="Tell us how we can help..." required></textarea>
+            </div>
+            <button type="submit" class="ct-submit">SEND MESSAGE →</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -1469,5 +1705,32 @@ html[data-theme="light"] .ticker-card { background: #ffffff; border: 1px solid r
     })();
   </script>
 
+  <script>
+    (function () {
+      var isOpen = false;
+      function ctToggle() {
+        isOpen = !isOpen;
+        var btn  = document.getElementById('ct-dd-btn');
+        var list = document.getElementById('ct-dd-list');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (isOpen) { list.removeAttribute('hidden'); }
+        else        { list.setAttribute('hidden', ''); }
+      }
+      function ctPick(el, val) {
+        document.getElementById('ct-dd-val').textContent = val;
+        document.querySelectorAll('.ct-dropdown-item').forEach(function (i) { i.classList.remove('ct-selected'); });
+        el.classList.add('ct-selected');
+        if (isOpen) ctToggle();
+      }
+      function ctSubmit(e) { e.preventDefault(); }
+      document.addEventListener('mousedown', function (e) {
+        var dd = document.getElementById('ct-dd');
+        if (dd && !dd.contains(e.target) && isOpen) ctToggle();
+      });
+      window.ctToggle = ctToggle;
+      window.ctPick   = ctPick;
+      window.ctSubmit = ctSubmit;
+    })();
+  </script>
 </body>
 </html>
